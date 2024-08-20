@@ -21,8 +21,16 @@ const activitySchema = mongoose.Schema(
       type: Date,
       default: Date.now, // Automatically sets to the current date and time
     },
-  },
-  { timestamps: true }
+    clockInTime: {
+      type: Date,
+      default: () => new Date(new Date().setHours(6, 0, 0, 0)), // Default to 6:00 AM today
+    },
+    clockOutTime: {
+      type: Date,
+      default: () => new Date(new Date().setHours(15, 0, 0, 0)), // Default to 3:00 PM today
+    },
+  }
+  // { timestamps: true }
 ); // Automatically adds createdAt and updatedAt fields
 
 const userSchema = mongoose.Schema(

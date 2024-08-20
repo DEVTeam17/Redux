@@ -8,20 +8,27 @@ import {
   Image,
 } from "react-native";
 import { Avatar, IconButton, Divider } from "react-native-paper";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import MenuButton from "../components/MenuButton";
 import AttendanceItem from "../components/AttendanceItem";
 import ClockInfo from "../components/ClockInfo";
 import themeContext from "../context/themeContext";
 import theme from "../context/theme";
+import { logout } from "../actions/userActions";
+import Button from "../components/Button";
 
 const HomeScreen = ({ navigation }) => {
   // const userLogin = useSelector((state) => state.userLogin);
   // const { user } = userLogin;
+
   const userDetails = useSelector((state) => state.userDetails);
   const { user } = userDetails;
   console.log(user);
+
+  const dispatch = useDispatch();
+  const userList = useSelector((state) => state.userList);
+  const { users } = userList;
 
   const theme = useContext(themeContext);
 
@@ -39,15 +46,31 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  const latestLogin = user?.activities
-    ?.filter((activity) => activity.activityType === "Login")
-    .pop(); // Get the latest login activity
-  console.log("Login Timestamp:", latestLogin?.timestamp);
-  console.log(latestLogin);
+  const userActivities = user.activities || [];
 
-  const latestLogout = user?.activities
-    ?.filter((activity) => activity.activityType === "Logout")
-    .pop(); // Get the latest logout activity
+  // Find the latest clock-in activity
+  const latestClockIn = userActivities
+    .filter((activity) => activity.activityType === "Login")
+    .pop();
+
+  // Find the latest clock-out activity
+  const latestClockOut = userActivities
+    .filter((activity) => activity.activityType === "Logout")
+    .pop();
+
+  // Format the times for display
+  const formattedClockInTime = latestClockIn?.clockInTime
+    ? formatTime(new Date(latestClockIn.clockInTime))
+    : "Not Yet";
+
+  const formattedClockOutTime = latestClockOut?.clockOutTime
+    ? formatTime(new Date(latestClockOut.clockOutTime))
+    : "Not Yet";
+
+  const logoutHandler = () => {
+    dispatch(logout());
+    navigation.navigate("LoginScreen");
+  };
 
   return (
     <SafeAreaView
@@ -107,10 +130,10 @@ const HomeScreen = ({ navigation }) => {
             >
               <ClockInfo
                 title="Clock In"
-                time={latestLogin ? formatTime(latestLogin.timestamp) : "N/A"}
+                time={formattedClockInTime} // Display formatted clock-in time
                 buttonTitle={
-                  latestLogin
-                    ? `Done at ${formatTime(latestLogin.timestamp)}`
+                  latestClockIn
+                    ? `Done at ${formatTime(latestClockIn.timestamp)}`
                     : "Not Yet"
                 }
                 mode={"elevated"}
@@ -120,10 +143,10 @@ const HomeScreen = ({ navigation }) => {
               {/* Clock Out */}
               <ClockInfo
                 title="Clock Out"
-                time={latestLogout ? formatTime(latestLogout.timestamp) : "N/A"}
+                time={formattedClockOutTime} // Display formatted clock-out time
                 buttonTitle={
-                  latestLogout
-                    ? `Done at ${formatTime(latestLogout.timestamp)}`
+                  latestClockOut
+                    ? `Done at ${formatTime(latestClockOut.timestamp)}`
                     : "Not Yet"
                 }
                 mode={"contained"}
@@ -183,6 +206,44 @@ const HomeScreen = ({ navigation }) => {
                 text="Other"
                 onPress={() => console.log("pressed")}
               />
+            </View>
+            {/* Logout Button */}
+            {/* <View style={styles.logoutButtonContainer}>
+              <Button title="Logout" color="red" onPress={logoutHandler} />
+            </View> */}
+            <Button onPress={logoutHandler} children={"Logout"} />
+            {/* Attendance Container */}
+            <View
+              style={[
+                styles.attendanceContainer,
+                { backgroundColor: theme.secondaryBackground },
+              ]}
+            >
+              <View style={styles.header}>
+                <Text style={[styles.headerText, { color: theme.color }]}>
+                  Attendance Tracking
+                </Text>
+                <Text
+                  onPress={() =>
+                    navigation.navigate("AllUsersScreen", { users })
+                  }
+                  style={[styles.viewAllText, { color: theme.color }]}
+                >
+                  View All
+                </Text>
+              </View>
+              {users.slice(0, 6).map((user, index) => (
+                <View key={user._id}>
+                  <AttendanceItem
+                    name={user.name}
+                    title={user.jobTitle}
+                    time={user.time}
+                    avatarSource={user.image}
+                    isLoggedIn={user.isLoggedIn}
+                  />
+                  {index < 5 && <Divider />}
+                </View>
+              ))}
             </View>
           </View>
 

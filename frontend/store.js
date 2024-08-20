@@ -4,10 +4,13 @@ import { thunk } from "redux-thunk";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
+  userDeleteReducer,
   userDetailsReducer,
+  userListReducer,
   userLoginReducer,
   userRegisterReducer,
   userUpdateProfileReducer,
+  userUpdateReducer,
 } from "./src/reducers/userReducer";
 
 const reducer = combineReducers({
@@ -15,13 +18,13 @@ const reducer = combineReducers({
   userRegister: userRegisterReducer,
   userDetails: userDetailsReducer,
   userUpdateProfile: userUpdateProfileReducer,
+  userList: userListReducer,
+  userUpdate: userUpdateReducer,
+  userDelete: userDeleteReducer,
 });
 
 const initialState = {
-  userLogin: { userInfo: null, loading: false, error: null },
-  userRegister: { loading: false, error: null },
-  userDetails: { user: {}, loading: false, error: null },
-  userUpdateProfile: { user: {}, loading: false, error: null, success: false },
+  userLogin: { userInfo: null },
 };
 
 const middlewares = [thunk];
