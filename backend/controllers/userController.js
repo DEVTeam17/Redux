@@ -14,6 +14,8 @@ const authUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
+    await user.logLogin();
+
     res.json({
       _id: user._id,
       name: user.name,
@@ -34,12 +36,32 @@ const authUser = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc 		Logout user
+ * @route		POST /api/users/logout
+ * @access	public
+ */
+const logoutUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  // Check if the user is not populated or doesn't exist
+  if (!user) {
+    res.status(401); // Unauthorized status code
+    throw new Error("User not found or not authenticated");
+  }
+
+  // Log the logout activity
+  await user.logLogout();
+
+  res.json({ message: "User logged out successfully" });
+});
+
+/**
  * @desc 		Get user profile
  * @route		GET /api/users/profile
  * @access	private
  */
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id).populate("activities"); // Populate activities
 
   if (user) {
     res.json({
@@ -53,6 +75,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       department: user.department,
       status: user.status,
       image: user.image,
+      activities: user.activities, // Ensure activities are included
       token: generateToken(user._id),
     });
   } else {
@@ -264,4 +287,5 @@ export {
   deleteUser,
   getUserByID,
   updateUser,
+  logoutUser,
 };

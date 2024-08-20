@@ -11,7 +11,7 @@ const activitySchema = mongoose.Schema(
     activityType: {
       type: String,
       required: true,
-      enum: ["Login", "Profile Update", "Task Completion", "Other"], // Enum for activity types
+      enum: ["Login", "Logout", "Profile Update", "Task Completion", "Other"], // Enum for activity types
     },
     description: {
       type: String,
@@ -78,6 +78,26 @@ const userSchema = mongoose.Schema(
 // Method to compare entered password with the stored hashed password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.logLogin = async function () {
+  this.activities.push({
+    user: this._id,
+    activityType: "Login",
+    description: "User logged in",
+    timestamp: new Date(), // Captures the login time
+  });
+  await this.save();
+};
+
+userSchema.methods.logLogout = async function () {
+  this.activities.push({
+    user: this._id,
+    activityType: "Logout",
+    description: "User logged out",
+    timestamp: new Date(), // Captures the logout time
+  });
+  await this.save();
 };
 
 // Pre-save hook to hash the password before saving it to the database

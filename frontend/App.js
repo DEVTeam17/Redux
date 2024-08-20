@@ -20,6 +20,7 @@ import OnBoardingThree from "./src/screens/OnBoardingThree";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
+import HomeScreen from "./src/screens/HomeScreen";
 
 import store from "./store";
 
@@ -67,6 +68,7 @@ export default function App() {
                 name="DashboardScreen"
                 component={DashboardScreen}
               />
+              <Stack.Screen name="HomeScreen" component={HomeScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </themeContext.Provider>

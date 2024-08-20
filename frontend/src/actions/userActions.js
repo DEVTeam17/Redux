@@ -39,6 +39,7 @@ export const login = (email, password) => async (dispatch) => {
     console.log(data);
 
     await AsyncStorage.setItem("userInfo", JSON.stringify(data));
+    dispatch(getUserDetails());
   } catch (err) {
     dispatch({
       type: USER_LOGIN_FAIL,
@@ -123,7 +124,7 @@ export const getUserDetails = () => async (dispatch, getState) => {
 
     const {
       userLogin: { userInfo },
-    } = getState(); // 2-level destructuring
+    } = getState();
 
     const config = {
       headers: {
@@ -131,16 +132,21 @@ export const getUserDetails = () => async (dispatch, getState) => {
       },
     };
 
-    const { data } = await axios.get(`/api/users/profile`, config);
+    const { data } = await axios.get(`${API_URL}/profile`, config);
+
+    // Check if the activities are included in the data response
+    console.log(data.activities);
 
     dispatch({ type: USER_DETAILS_SUCCESS, payload: data });
   } catch (err) {
+    const errorMessage =
+      err.response && err.response.data.message
+        ? err.response.data.message
+        : err.message;
+
     dispatch({
       type: USER_DETAILS_FAIL,
-      payload:
-        err.response && err.response.data.message
-          ? err.response.data.message
-          : err.message,
+      payload: errorMessage,
     });
   }
 };

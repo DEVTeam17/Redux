@@ -72,22 +72,30 @@ const LoginScreen = ({ navigation }) => {
     setErrors((prevState) => ({ ...prevState, [input]: error }));
   };
 
-  useEffect(() => {
-    if (userInfo) {
-      navigation.navigate("DashboardScreen");
-    }
-  }, [navigation, userInfo]);
+  // useEffect(() => {
+  //   if (userInfo) {
+  //     navigation.navigate("DashboardScreen");
+  //   }
+  // }, [navigation, userInfo]);
 
+  // useEffect(() => {
+  //   if (error) {
+  //     Alert.alert("Login Error", error);
+  //   }
+  // }, [error]);
   useEffect(() => {
-    if (error) {
+    if (userInfo && !error) {
+      navigation.navigate("HomeScreen");
+    } else if (!userInfo && error) {
       Alert.alert("Login Error", error);
     }
-  }, [error]);
+  }, [navigation, userInfo, error]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.black }]}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <LoadingOverlay visible={loading} message="Logging you in..." />
+
         <ImageBackground
           source={image}
           resizeMode="cover"
