@@ -3,37 +3,36 @@ import { SafeAreaView, ScrollView, View, Text, StyleSheet } from "react-native";
 import { Divider } from "react-native-paper";
 import AttendanceItem from "../components/AttendanceItem";
 import themeContext from "../context/themeContext";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 const AllUsersScreen = ({ route }) => {
   const userList = useSelector((state) => state.userList);
   const { users } = userList;
   const theme = useContext(themeContext);
 
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
+  const getLatestActivity = (activities = []) => {
+    const todayDate = new Date();
+
+    const activitiesForToday = activities.filter((activity) => {
+      const activityDate = new Date(activity.timestamp);
+      return (
+        activityDate.getFullYear() === todayDate.getFullYear() &&
+        activityDate.getMonth() === todayDate.getMonth() &&
+        activityDate.getDate() === todayDate.getDate()
+      );
     });
-  };
 
-  const getLatestActivityTime = (activities = []) => {
-    if (!activities || activities.length === 0)
-      return { latestActivityTime: "No Activity", isLoggedIn: false };
+    const latestActivity = activitiesForToday[activitiesForToday.length - 1];
 
-    const latestActivity = activities
-      .filter(
-        (activity) =>
-          activity.activityType === "Login" ||
-          activity.activityType === "Logout"
-      )
-      .pop();
-
+    // Determine if the user is currently logged in
     const isLoggedIn = latestActivity?.activityType === "Login";
 
     const latestActivityTime = latestActivity
-      ? formatTime(new Date(latestActivity.timestamp))
+      ? new Date(latestActivity.timestamp).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+        })
       : "No Activity";
 
     return { latestActivityTime, isLoggedIn };
@@ -57,15 +56,16 @@ const AllUsersScreen = ({ route }) => {
               </Text>
             </View>
             {users.map((userItem, index) => {
-              const { latestActivityTime, isLoggedIn } = getLatestActivityTime(
+              const { latestActivityTime, isLoggedIn } = getLatestActivity(
                 userItem.activities
               );
+
               return (
                 <View key={userItem._id}>
                   <AttendanceItem
                     name={userItem.name}
                     title={userItem.jobTitle}
-                    time={latestActivityTime}
+                    time={latestActivityTime} // Show login or logout time based on status
                     avatarSource={userItem.image}
                     isLoggedIn={isLoggedIn}
                   />

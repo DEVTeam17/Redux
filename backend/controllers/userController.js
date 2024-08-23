@@ -43,7 +43,6 @@ const authUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
   const user = req.user;
 
-  // Check if the user is not populated or doesn't exist
   if (!user) {
     res.status(401); // Unauthorized status code
     throw new Error("User not found or not authenticated");
@@ -61,7 +60,7 @@ const logoutUser = asyncHandler(async (req, res) => {
  * @access	private
  */
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate("activities"); // Populate activities
+  const user = await User.findById(req.user._id).populate("activities");
 
   if (user) {
     res.json({
@@ -75,7 +74,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       department: user.department,
       status: user.status,
       image: user.image,
-      activities: user.activities, // Ensure activities are included
+      activities: user.activities,
       token: generateToken(user._id),
     });
   } else {
@@ -148,7 +147,6 @@ const registerUser = asyncHandler(async (req, res) => {
  * @route		PUT /api/users/profile
  * @access	private
  */
-
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
@@ -161,6 +159,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     user.department = req.body.department || user.department;
     user.status = req.body.status || user.status;
     user.image = req.body.image || user.image;
+
     if (req.body.password) {
       user.password = req.body.password;
     }
@@ -247,12 +246,10 @@ const updateUser = asyncHandler(async (req, res) => {
     user.status = req.body.status || user.status;
     user.image = req.body.image || user.image;
 
-    // Update isAdmin field if provided
     if (req.body.isAdmin !== undefined) {
       user.isAdmin = req.body.isAdmin;
     }
 
-    // Update password if provided and hash it
     if (req.body.password) {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(req.body.password, salt);
@@ -286,7 +283,6 @@ const updateUser = asyncHandler(async (req, res) => {
 const requestTimeOff = asyncHandler(async (req, res) => {
   const { userId, category, duration, description, attachments } = req.body;
 
-  // Find the user who is making the time-off request
   const user = await User.findById(userId);
 
   if (!user) {
@@ -294,7 +290,6 @@ const requestTimeOff = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  // Add the time-off request to the user's timeOffs array
   const timeOffRequest = {
     category,
     duration: {
@@ -307,7 +302,6 @@ const requestTimeOff = asyncHandler(async (req, res) => {
     attachments,
   };
 
-  // Push the new time-off request to the user's timeOffs array and save
   user.timeOffs.push(timeOffRequest);
   await user.save();
 

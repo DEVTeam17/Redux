@@ -65,6 +65,32 @@ const timeOffSchema = mongoose.Schema(
   { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );
 
+// Schema for shift timings (static for user reference)
+const shiftTimingSchema = mongoose.Schema({
+  clockInTime: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (value) {
+        // Ensure time is in HH:MM AM/PM format
+        return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]\s?(AM|PM)?$/.test(value);
+      },
+      message: "Shift time must be in HH:MM AM/PM format",
+    },
+  },
+  clockOutTime: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (value) {
+        // Ensure time is in HH:MM AM/PM format
+        return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]\s?(AM|PM)?$/.test(value);
+      },
+      message: "Shift time must be in HH:MM AM/PM format",
+    },
+  },
+});
+
 const activitySchema = mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -84,14 +110,17 @@ const activitySchema = mongoose.Schema({
     type: Date,
     default: Date.now, // Automatically sets to the current date and time
   },
-  clockInTime: {
-    type: Date,
-    default: () => new Date(new Date().setHours(8, 0, 0, 0)), // Default to 6:00 AM today
+  attendance: {
+    checkIn: {
+      type: Date,
+      required: true,
+    },
+    checkOut: {
+      type: Date,
+      default: null, // Check-out can be null initially
+    },
   },
-  clockOutTime: {
-    type: Date,
-    default: () => new Date(new Date().setHours(17, 0, 0, 0)), // Default to 3:00 PM today
-  },
+  shiftTiming: shiftTimingSchema, // Embed shift timing data
 });
 
 const userSchema = mongoose.Schema(
@@ -156,17 +185,37 @@ userSchema.methods.logLogin = async function () {
     activityType: "Login",
     description: "User logged in",
     timestamp: new Date(), // Captures the login time
+    attendance: {
+      checkIn: new Date(), // Actual check-in time
+    },
+    shiftTiming: {
+      clockInTime: "8:00 AM", // You can dynamically set this based on the user’s shift schedule
+      clockOutTime: "5:00 PM",
+    },
   });
   await this.save();
 };
 
 userSchema.methods.logLogout = async function () {
-  this.activities.push({
-    user: this._id,
-    activityType: "Logout",
-    description: "User logged out",
-    timestamp: new Date(), // Captures the logout time
-  });
+  const lastLogin = this.activities.find(
+    (activity) =>
+      activity.activityType === "Login" &&
+      activity.attendance &&
+      !activity.attendance.checkOut
+  );
+
+  if (lastLogin) {
+    lastLogin.attendance.checkOut = new Date(); // Actual check-out time
+    lastLogin.save();
+  } else {
+    this.activities.push({
+      user: this._id,
+      activityType: "Logout",
+      description: "User logged out",
+      timestamp: new Date(), // Captures the logout time
+    });
+  }
+
   await this.save();
 };
 

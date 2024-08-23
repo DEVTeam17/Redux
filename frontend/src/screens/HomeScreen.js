@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -14,27 +14,33 @@ import MenuButton from "../components/MenuButton";
 import AttendanceItem from "../components/AttendanceItem";
 import ClockInfo from "../components/ClockInfo";
 import themeContext from "../context/themeContext";
-import theme from "../context/theme";
 import { logout, listUsers } from "../actions/userActions";
 import Button from "../components/Button";
 
 const HomeScreen = ({ navigation }) => {
   const userDetails = useSelector((state) => state.userDetails);
   const { user } = userDetails;
-  console.log(user);
 
   const dispatch = useDispatch();
   const userList = useSelector((state) => state.userList);
   const { users } = userList;
+  console.log(user);
 
   const theme = useContext(themeContext);
 
-  const today = new Date().toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  // Function to check if two dates are the same day
+  const isSameDay = (date1, date2) => {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  };
 
+  // Get today's date
+  const todayDate = new Date();
+
+  // Function to format time to 'HH:MM AM/PM'
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -45,58 +51,74 @@ const HomeScreen = ({ navigation }) => {
 
   const userActivities = user.activities || [];
 
-  // Find the latest clock-in activity
-  const latestClockIn = userActivities
-    .filter((activity) => activity.activityType === "Login")
-    .pop();
+  // Filter activities for today
+  const activitiesForToday = userActivities.filter((activity) => {
+    const activityDate = new Date(activity.timestamp);
+    return isSameDay(activityDate, todayDate);
+  });
 
-  // Find the latest clock-out activity
-  const latestClockOut = userActivities
-    .filter((activity) => activity.activityType === "Logout")
-    .pop();
+  // Find the first login of the day
+  const firstLogin = activitiesForToday.find(
+    (activity) => activity.activityType === "Login"
+  );
 
-  // Format the times for display
-  const formattedClockInTime = latestClockIn?.clockInTime
-    ? formatTime(new Date(latestClockIn.clockInTime))
-    : "Not Yet";
+  // Find the last logout of the day
+  const lastLogout = [...activitiesForToday]
+    .reverse()
+    .find((activity) => activity.activityType === "Logout");
 
-  const formattedClockOutTime = latestClockIn?.clockOutTime
-    ? formatTime(new Date(latestClockIn.clockOutTime))
-    : "Not Yet";
-
-  // Function to get the latest login or logout activity time
-  const getLatestActivityTime = (activities) => {
-    if (!activities || activities.length === 0)
-      return { latestActivityTime: "No Activity", isLoggedIn: false };
-
-    // Get the latest activity (either login or logout)
-    const latestActivity = activities
-      .filter(
-        (activity) =>
-          activity.activityType === "Login" ||
-          activity.activityType === "Logout"
-      )
-      .pop();
-
-    // Determine if the user is logged in
-    const isLoggedIn = latestActivity?.activityType === "Login";
-
-    // Get the activity time from the timestamp
-    const latestActivityTime = latestActivity
-      ? formatTime(new Date(latestActivity.timestamp))
-      : "No Activity";
-
-    return { latestActivityTime, isLoggedIn };
+  // Extract the shift timing (clock-in and clock-out) from the first login or use fallback
+  const shiftTiming = firstLogin?.shiftTiming || {
+    clockInTime: "8:00 AM",
+    clockOutTime: "5:00 PM",
   };
+
+  const formattedLoginTime = firstLogin
+    ? formatTime(firstLogin.timestamp) // Use the timestamp for the buttonTitle
+    : "Not Yet";
+
+  const formattedLogoutTime = lastLogout
+    ? formatTime(lastLogout.timestamp) // Use the timestamp for the buttonTitle
+    : "Not Yet";
 
   const logoutHandler = () => {
     dispatch(logout());
     navigation.navigate("LoginScreen");
   };
+
   const userListHandler = async () => {
-    await dispatch(listUsers());
-    console.log("Navigating to AllUsersScreen with users:", users);
+    dispatch(listUsers());
     navigation.navigate("AllUsersScreen", { users });
+  };
+
+  // Helper function to get first login and last logout for other users
+  const getFirstLoginAndLastLogout = (activities) => {
+    const activitiesForToday = activities.filter((activity) => {
+      const activityDate = new Date(activity.timestamp);
+      return isSameDay(activityDate, todayDate);
+    });
+
+    const firstLogin = activitiesForToday.find(
+      (activity) => activity.activityType === "Login"
+    );
+
+    const lastLogout = [...activitiesForToday]
+      .reverse()
+      .find((activity) => activity.activityType === "Logout");
+
+    // Use the timestamp of the first login or last logout for the time
+    const latestActivityTime = lastLogout
+      ? formatTime(lastLogout.timestamp)
+      : firstLogin
+      ? formatTime(firstLogin.timestamp)
+      : "No Activity";
+
+    return {
+      firstLogin,
+      lastLogout,
+      latestActivityTime,
+      isLoggedIn: !!firstLogin && !lastLogout,
+    };
   };
 
   return (
@@ -137,7 +159,12 @@ const HomeScreen = ({ navigation }) => {
                 Today's Overview
               </Text>
               <Text style={[styles.overviewDate, { color: theme.color }]}>
-                {today}
+                {todayDate.toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}{" "}
+                {/* Display today's date in the preferred format */}
               </Text>
             </View>
             <View style={styles.iconContainer}>
@@ -148,6 +175,7 @@ const HomeScreen = ({ navigation }) => {
                 onPress={() => console.log("Pressed")}
               />
             </View>
+
             {/* Clock In */}
             <View
               style={[
@@ -157,11 +185,9 @@ const HomeScreen = ({ navigation }) => {
             >
               <ClockInfo
                 title="Clock In"
-                time={formattedClockInTime} // Display formatted clock-in time
+                time={shiftTiming.clockInTime} // Use shift clock-in time
                 buttonTitle={
-                  latestClockIn
-                    ? `Done at ${formatTime(latestClockIn.timestamp)}`
-                    : "Not Yet"
+                  firstLogin ? `Done at ${formattedLoginTime}` : "Not Yet"
                 }
                 mode={"elevated"}
                 textColor={"green"}
@@ -170,12 +196,10 @@ const HomeScreen = ({ navigation }) => {
               {/* Clock Out */}
               <ClockInfo
                 title="Clock Out"
-                time={formattedClockOutTime} // Display formatted clock-out time
+                time={shiftTiming.clockOutTime} // Use shift clock-out time
                 buttonTitle={
-                  latestClockIn
-                    ? "Not Yet"
-                    : latestClockOut
-                    ? `Done at ${formatTime(latestClockOut.timestamp)}`
+                  lastLogout
+                    ? `Last logout at ${formattedLogoutTime}`
                     : "Not Yet"
                 }
                 mode={"contained"}
@@ -252,24 +276,26 @@ const HomeScreen = ({ navigation }) => {
                   Attendance Tracking
                 </Text>
                 <Text
-                  onPress={() =>
-                    // navigation.navigate("AllUsersScreen", { users })
-                    userListHandler()
-                  }
+                  onPress={() => userListHandler()}
                   style={[styles.viewAllText, { color: theme.color }]}
                 >
                   View All
                 </Text>
               </View>
               {users.slice(0, 6).map((userItem, index) => {
-                const { latestActivityTime, isLoggedIn } =
-                  getLatestActivityTime(userItem.activities);
+                const {
+                  firstLogin,
+                  lastLogout,
+                  latestActivityTime,
+                  isLoggedIn,
+                } = getFirstLoginAndLastLogout(userItem.activities);
+
                 return (
                   <View key={userItem._id}>
                     <AttendanceItem
                       name={userItem.name}
                       title={userItem.jobTitle}
-                      time={latestActivityTime}
+                      time={latestActivityTime} // Correctly show the latest activity time
                       avatarSource={userItem.image}
                       isLoggedIn={isLoggedIn}
                     />
@@ -313,12 +339,10 @@ const styles = StyleSheet.create({
   },
   titleText: {
     marginBottom: 5,
-    color: theme.white,
     fontWeight: "200",
   },
   nameText: {
     marginBottom: 5,
-    color: theme.white,
   },
   overviewContainer: {
     borderRadius: 20,
