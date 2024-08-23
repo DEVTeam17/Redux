@@ -27,6 +27,9 @@ import {
   USER_UPDATE_PROFILE_SUCCESS,
   USER_UPDATE_REQUEST,
   USER_UPDATE_SUCCESS,
+  USER_TIMEOFF_REQUEST,
+  USER_TIMEOFF_SUCCESS,
+  USER_TIMEOFF_FAIL,
 } from "../constants/userConstants";
 
 const API_URL = "http://localhost:5000/api/users"; // Replace with your actual API URL
@@ -63,13 +66,6 @@ export const login = (email, password) => async (dispatch) => {
     });
   }
 };
-
-// export const logout = () => async (dispatch) => {
-//   await AsyncStorage.removeItem("userInfo");
-
-//   // localStorage.removeItem("userInfo");
-//   dispatch({ type: USER_LOGOUT });
-// };
 
 export const logout = () => async (dispatch, getState) => {
   try {
@@ -304,3 +300,62 @@ export const updateUser = (user) => async (dispatch, getState) => {
     });
   }
 };
+
+export const timeOff =
+  (
+    userId,
+    category,
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    description,
+    attachments
+  ) =>
+  async (dispatch, getState) => {
+    try {
+      dispatch({ type: USER_TIMEOFF_REQUEST });
+
+      const {
+        userLogin: { userInfo },
+      } = getState(); // Extracting the logged-in user's information from the state
+
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userInfo.token}`, // Adding the token for protected routes
+        },
+      };
+
+      // Making POST request to apply for time off
+      const { data } = await axios.post(
+        `${API_URL}/timeoff`,
+        {
+          userId,
+          category,
+          duration: {
+            startDate,
+            startTime,
+            endDate,
+            endTime,
+          },
+          description,
+          attachments,
+        },
+        config
+      );
+
+      // Dispatching success action
+      dispatch({ type: USER_TIMEOFF_SUCCESS, payload: data });
+      console.log("Time-off request successful:", data);
+    } catch (err) {
+      // Handling errors
+      dispatch({
+        type: USER_TIMEOFF_FAIL,
+        payload:
+          err.response && err.response.data.message
+            ? err.response.data.message
+            : err.message,
+      });
+    }
+  };

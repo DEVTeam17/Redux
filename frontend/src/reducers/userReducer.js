@@ -25,6 +25,10 @@ import {
   USER_UPDATE_REQUEST,
   USER_UPDATE_RESET,
   USER_UPDATE_SUCCESS,
+  USER_TIMEOFF_REQUEST,
+  USER_TIMEOFF_SUCCESS,
+  USER_TIMEOFF_FAIL,
+  USER_TIMEOFF_RESET,
 } from "../constants/userConstants";
 
 export const userLoginReducer = (state = {}, action) => {
@@ -124,6 +128,27 @@ export const userUpdateReducer = (state = { user: {} }, action) => {
       return { loading: false, error: action.payload };
     case USER_UPDATE_RESET:
       return { user: {} };
+    default:
+      return state;
+  }
+};
+
+const initialState = {
+  loading: false,
+  timeOffInfo: null,
+  error: null,
+};
+
+export const userTimeOffReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case USER_TIMEOFF_REQUEST:
+      return { loading: true, timeOffInfo: null, error: null };
+    case USER_TIMEOFF_SUCCESS:
+      return { loading: false, timeOffInfo: action.payload, error: null };
+    case USER_TIMEOFF_FAIL:
+      return { loading: false, timeOffInfo: null, error: action.payload };
+    case USER_TIMEOFF_RESET:
+      return { ...initialState };
     default:
       return state;
   }

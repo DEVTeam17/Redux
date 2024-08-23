@@ -278,6 +278,45 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @desc    Submit a time-off request
+ * @route   POST /api/timeoff
+ * @access  Private
+ */
+const requestTimeOff = asyncHandler(async (req, res) => {
+  const { userId, category, duration, description, attachments } = req.body;
+
+  // Find the user who is making the time-off request
+  const user = await User.findById(userId);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  // Add the time-off request to the user's timeOffs array
+  const timeOffRequest = {
+    category,
+    duration: {
+      startDate: duration.startDate,
+      startTime: duration.startTime,
+      endDate: duration.endDate,
+      endTime: duration.endTime,
+    },
+    description,
+    attachments,
+  };
+
+  // Push the new time-off request to the user's timeOffs array and save
+  user.timeOffs.push(timeOffRequest);
+  await user.save();
+
+  res.status(201).json({
+    message: "Time-off request submitted successfully",
+    timeOff: timeOffRequest,
+  });
+});
+
 export {
   authUser,
   getUserProfile,
@@ -288,4 +327,5 @@ export {
   getUserByID,
   updateUser,
   logoutUser,
+  requestTimeOff,
 };

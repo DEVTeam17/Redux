@@ -22,6 +22,7 @@ import RegisterScreen from "./src/screens/RegisterScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import AllUsersScreen from "./src/screens/AllUsersScreen";
+import TimeOffScreen from "./src/screens/TimeOffScreen";
 
 import store from "./store";
 
@@ -71,6 +72,7 @@ export default function App() {
               />
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
               <Stack.Screen name="AllUsersScreen" component={AllUsersScreen} />
+              <Stack.Screen name="TimeOffScreen" component={TimeOffScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </themeContext.Provider>

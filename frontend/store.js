@@ -11,6 +11,7 @@ import {
   userRegisterReducer,
   userUpdateProfileReducer,
   userUpdateReducer,
+  userTimeOffReducer,
 } from "./src/reducers/userReducer";
 
 const reducer = combineReducers({
@@ -21,6 +22,7 @@ const reducer = combineReducers({
   userList: userListReducer,
   userUpdate: userUpdateReducer,
   userDelete: userDeleteReducer,
+  timeOff: userTimeOffReducer,
 });
 
 const initialState = {
