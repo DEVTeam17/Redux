@@ -1,37 +1,98 @@
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
-const activitySchema = mongoose.Schema(
+// Define the TimeOff schema
+const timeOffSchema = mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Reference to the User model
-      required: true,
-    },
-    activityType: {
+    category: {
       type: String,
       required: true,
-      enum: ["Login", "Logout", "Profile Update", "Task Completion", "Other"], // Enum for activity types
+      enum: ["Sick", "Vacation", "Maternity", "Personal Matters"], // Enum for time-off categories
+    },
+    duration: {
+      startDate: {
+        type: Date,
+        required: true,
+      },
+      startTime: {
+        type: String,
+        required: true,
+        validate: {
+          validator: function (value) {
+            // Ensure start time is in HH:MM format
+            return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+          },
+          message: "Start time must be in HH:MM format",
+        },
+      },
+      endDate: {
+        type: Date,
+        required: true,
+      },
+      endTime: {
+        type: String,
+        required: true,
+        validate: {
+          validator: function (value) {
+            // Ensure end time is in HH:MM format
+            return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+          },
+          message: "End time must be in HH:MM format",
+        },
+      },
     },
     description: {
       type: String,
       required: true,
     },
-    timestamp: {
-      type: Date,
-      default: Date.now, // Automatically sets to the current date and time
-    },
-    clockInTime: {
-      type: Date,
-      default: () => new Date(new Date().setHours(6, 0, 0, 0)), // Default to 6:00 AM today
-    },
-    clockOutTime: {
-      type: Date,
-      default: () => new Date(new Date().setHours(15, 0, 0, 0)), // Default to 3:00 PM today
-    },
-  }
-  // { timestamps: true }
-); // Automatically adds createdAt and updatedAt fields
+    attachments: [
+      {
+        fileName: {
+          type: String,
+          required: true,
+        },
+        fileUrl: {
+          type: String,
+          required: true,
+        },
+        uploadDate: {
+          type: Date,
+          default: Date.now, // Automatically set to the current date and time
+        },
+      },
+    ],
+  },
+  { timestamps: true } // Automatically adds createdAt and updatedAt fields
+);
+
+const activitySchema = mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Reference to the User model
+    required: true,
+  },
+  activityType: {
+    type: String,
+    required: true,
+    enum: ["Login", "Logout", "Profile Update", "Task Completion", "Other"], // Enum for activity types
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now, // Automatically sets to the current date and time
+  },
+  clockInTime: {
+    type: Date,
+    default: () => new Date(new Date().setHours(8, 0, 0, 0)), // Default to 6:00 AM today
+  },
+  clockOutTime: {
+    type: Date,
+    default: () => new Date(new Date().setHours(17, 0, 0, 0)), // Default to 3:00 PM today
+  },
+});
 
 const userSchema = mongoose.Schema(
   {
@@ -79,6 +140,7 @@ const userSchema = mongoose.Schema(
       required: false, // Optional field for profile picture URL
     },
     activities: [activitySchema],
+    timeOffs: [timeOffSchema],
   },
   { timestamps: true }
 ); // Automatically adds createdAt and updatedAt fields

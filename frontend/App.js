@@ -21,6 +21,7 @@ import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import HomeScreen from "./src/screens/HomeScreen";
+import AllUsersScreen from "./src/screens/AllUsersScreen";
 
 import store from "./store";
 
@@ -69,6 +70,7 @@ export default function App() {
                 component={DashboardScreen}
               />
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
+              <Stack.Screen name="AllUsersScreen" component={AllUsersScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </themeContext.Provider>

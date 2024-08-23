@@ -9,7 +9,7 @@
     "server": "nodemon backend/server",
     "data:import": "node backend/seeder",
     "data:destroy": "node backend/seeder -d",
-    "client": "cd frontend && npx expo start -c --localhost --android",
+    "client": "cd frontend && npx expo start -c --localhost",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "author": "Anthony",
